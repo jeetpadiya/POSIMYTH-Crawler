@@ -43,16 +43,84 @@ export function HomePage() {
     setChatError('')
 
     const currentQuestion = question.trim()
+    const currentHistoryId = chatHistory.length
+
+    // Add empty response placeholder
+    setChatHistory((prev) => [
+      ...prev,
+      { question: currentQuestion, response: { answer: '', sources: [] } },
+    ])
+    setQuestion('')
 
     try {
-      const data = await postJson<ChatResponse>('/api/chat', {
-        question: currentQuestion,
-        topK: 5,
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: currentQuestion, topK: 5 }),
       })
 
-      setChatHistory((prev) => [...prev, { question: currentQuestion, response: data }])
-      setQuestion('')
-      setChatState('success')
+      if (!response.ok) {
+        throw new Error(await response.text())
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let isDone = false
+
+      if (!reader) throw new Error('No response body')
+
+      setChatState('success') // Set success to let the UI know it's ready to type
+
+      let buffer = ''
+      while (!isDone) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || '' // Keep incomplete chunk in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6)
+            try {
+              const data = JSON.parse(dataStr)
+
+              if (data.type === 'text') {
+                // Add a tiny delay to prevent React from batching all updates if 
+                // multiple chunks arrive in a single network packet.
+                await new Promise((resolve) => setTimeout(resolve, 10))
+                
+                setChatHistory((prev) => {
+                  const newHistory = [...prev]
+                  const updatedItem = { ...newHistory[currentHistoryId] }
+                  updatedItem.response = { 
+                    ...updatedItem.response, 
+                    answer: updatedItem.response.answer + data.text 
+                  }
+                  newHistory[currentHistoryId] = updatedItem
+                  return newHistory
+                })
+              } else if (data.type === 'done') {
+                setChatHistory((prev) => {
+                  const newHistory = [...prev]
+                  const updatedItem = { ...newHistory[currentHistoryId] }
+                  updatedItem.response = { 
+                    ...updatedItem.response, 
+                    sources: data.sources 
+                  }
+                  newHistory[currentHistoryId] = updatedItem
+                  return newHistory
+                })
+              } else if (data.type === 'error') {
+                throw new Error(data.error)
+              }
+            } catch (err) {
+              // Ignore invalid JSON
+            }
+          }
+        }
+      }
     } catch (error) {
       setChatError(getErrorMessage(error))
       setChatState('error')

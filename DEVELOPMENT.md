@@ -10,7 +10,7 @@ This was my first time building a web crawler, so I wanted to keep things struct
 
 | Category   | Technology / Library                            |
 | ---------- | ----------------------------------------------- |
-| Stack      | MERN (MongoDB, Express, React, Node.js)         |
+| Stack      | Node.js, Express, React (In-Memory Data Store)  |
 | Language   | TypeScript (JavaScript)                         |
 | Libraries  | `axios`, `cheerio`, `robots-parser`             |
 | LLM Engine | Google Gemini 3.5 Flash (free tier, fast)       |
@@ -23,7 +23,7 @@ This was my first time building a web crawler, so I wanted to keep things struct
 I structured the development into 9 phases to keep things organized and progressively build toward the final product.
 
 ### Phase 1 — Backend Skeleton
-Set up the core Express + TypeScript backend with the basic project structure, environment configuration, and database connection.
+Set up the core Express + TypeScript backend with the basic project structure and environment configuration.
 
 ### Phase 2 — Polite Website Crawler
 Implemented the crawler with full respect for `robots.txt` rules and crawl politeness — including request delays, user-agent identification, and disallowed path filtering using `robots-parser`.

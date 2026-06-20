@@ -1,7 +1,5 @@
 import type { TextChunk } from "./chunker.js";
 
-// This is intentionally a simple lexical store for the assignment.
-// A production version would replace this with embeddings and a vector database.
 const DEFAULT_TOP_K = 5;
 const MIN_QUERY_TERM_LENGTH = 3;
 const STOP_WORDS = new Set([

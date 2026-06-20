@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { generateGroundedAnswer } from "../services/llmEngine.js";
+import { generateGroundedAnswerStream } from "../services/llmEngine.js";
 import {
   getIndexStats,
   searchChunks,
@@ -35,35 +35,34 @@ export const askQuestion = async (req: Request, res: Response) => {
     (result) => result.score >= MIN_RELEVANCE_SCORE,
   );
 
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders(); // Ensure headers are sent immediately
+
   if (relevantResults.length === 0) {
-    return res.json({
-      answer: NOT_FOUND_ANSWER,
-      question,
-      sources: [],
-      index: indexStats,
-      retrievedChunks: formatRetrievedChunks(results),
-    });
+    res.write(`data: ${JSON.stringify({ type: "text", text: NOT_FOUND_ANSWER })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: "done", answer: NOT_FOUND_ANSWER, sources: [] })}\n\n`);
+    return res.end();
   }
 
   try {
-    const groundedAnswer = await generateGroundedAnswer(
-      question,
-      relevantResults,
-    );
-
-    return res.json({
-      answer: groundedAnswer.answer,
-      question,
-      sources: groundedAnswer.sources,
-      modelUsed: groundedAnswer.modelUsed,
-      index: indexStats,
-      retrievedChunks: formatRetrievedChunks(relevantResults),
-    });
+    const generator = generateGroundedAnswerStream(question, relevantResults);
+    
+    for await (const event of generator) {
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+      // @ts-ignore - flush may exist if using compression
+      if (typeof res.flush === "function") res.flush();
+    }
   } catch (error) {
-    return res.status(500).json({
-      error: "Failed to generate an answer.",
-      detail: error instanceof Error ? error.message : "Unknown error",
-    });
+    res.write(
+      `data: ${JSON.stringify({
+        type: "error",
+        error: error instanceof Error ? error.message : "Unknown error",
+      })}\n\n`
+    );
+  } finally {
+    res.end();
   }
 };
 

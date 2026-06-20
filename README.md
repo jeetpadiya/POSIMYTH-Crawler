@@ -30,7 +30,6 @@ LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 LLM_MODEL=gemini-3.5-flash
 ```
 
-`MONGO_URI` is optional. The current app does not require MongoDB for indexing because the search store is in memory.
 
 Start the backend:
 
@@ -105,7 +104,8 @@ The app follows a simple RAG pipeline:
 5. Chunks are stored in an in-memory search index.
 6. The chat endpoint searches the index before calling the LLM.
 7. The LLM receives only retrieved chunks as context.
-8. The API returns the answer plus source URLs from the retrieved chunks.
+8. The backend streams the answer back to the frontend using Server-Sent Events (SSE), providing a fast, responsive typing effect.
+9. The API returns source URLs from the retrieved chunks alongside the answer.
 
 Important files:
 
@@ -169,6 +169,8 @@ Each chunk stores metadata:
 
 The file is named `vectorStore.ts`, but the current implementation is intentionally a simple in-memory lexical search store.
 
+**Justification for In-Memory Store**: As permitted by the assignment instructions, I chose to use an in-memory index rather than a complex vector database like MongoDB/Atlas or pgvector. This keeps the architecture incredibly simple, lightweight, and easy to run locally without requiring any external database setup or Docker containers. Because the application is strictly scoped to "one site at a time," persisting vectors permanently across restarts isn't necessary.
+
 For this assignment, I used word-overlap scoring to keep the system small and explainable:
 
 1. Tokenize the question.
@@ -177,7 +179,7 @@ For this assignment, I used word-overlap scoring to keep the system small and ex
 4. Return the top results.
 5. The chat controller filters out weak matches before calling the LLM.
 
-For production, I would replace this with embeddings plus pgvector or a vector database.
+For production, I would replace this with embeddings plus pgvector or a dedicated vector database.
 
 ## Grounding Strategy
 
@@ -216,14 +218,19 @@ The UI includes only:
 - The crawler handles basic politeness but is not a production-grade crawler.
 - No authentication, persistence, or multi-user isolation.
 
+## Stretch Goals Addressed
+
+1. **Stripping boilerplate**: The crawler successfully removes `nav`, `footer`, `header`, and script elements before processing text.
+2. **Streaming responses**: The chat interface uses Server-Sent Events (SSE) to stream the LLM response word-by-word to the frontend, making it feel fast and responsive.
+3. **Basic eval script**: I built an automated evaluation script (`eval/run-eval.ts`) to measure retrieval quality against a predefined set of question/expected-source pairs (`eval/test-cases.json`).
+4. **Handling JavaScript-rendered pages (Skipped)**: I intentionally chose *not* to implement this. Adding Puppeteer or Playwright adds a massive Chromium dependency, severely slows down the crawl, and makes the project harder to run locally. I favored a "small site that answers accurately" over gold-plating with a heavy headless browser.
+
 ## Future Improvements
 
 - Replace lexical search with embeddings and pgvector.
-- Persist crawl sessions and chunks in a database.
-- Add a small retrieval eval set with expected source pages.
-- Add JavaScript rendering with Playwright for dynamic sites.
+- Persist crawl sessions and chunks in a database if multi-site features are added.
+- Add JavaScript rendering with Playwright for dynamic sites (if strictly required).
 - Add better boilerplate removal for cookie banners and repeated sidebars.
-- Add streaming answers in the frontend.
 - Add per-site crawl sessions instead of replacing the global index.
 - Improve ranking with BM25 or hybrid lexical/vector search.
 

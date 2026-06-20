@@ -31,32 +31,37 @@ type ProviderErrorBody = {
   };
 };
 
-export const generateGroundedAnswer = async (
+export type StreamEvent = 
+  | { type: "text"; text: string }
+  | { type: "done"; answer: string; sources: Source[]; modelUsed: string | null }
+  | { type: "error"; error: string };
+
+export const generateGroundedAnswerStream = async function* (
   question: string,
   results: SearchResult[],
-): Promise<GroundedAnswer> => {
+): AsyncGenerator<StreamEvent> {
   const sources = getUniqueSources(results);
   const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
   const baseUrl = process.env.LLM_BASE_URL || DEFAULT_BASE_URL;
   const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || DEFAULT_MODEL;
 
   if (!apiKey) {
-    return {
-      answer:
-        "I found relevant source text, but no LLM API key is configured. Set LLM_API_KEY or OPENAI_API_KEY to generate a natural-language answer.",
-      sources,
-      modelUsed: null,
-    };
+    yield { type: "text", text: "I found relevant source text, but no LLM API key is configured. Set LLM_API_KEY or OPENAI_API_KEY to generate a natural-language answer." };
+    yield { type: "done", answer: "I found relevant source text, but no LLM API key is configured. Set LLM_API_KEY or OPENAI_API_KEY to generate a natural-language answer.", sources, modelUsed: null };
+    return;
   }
 
-  let response;
-
   try {
-    response = await axios.post<ChatCompletionResponse>(
-      `${baseUrl}/chat/completions`,
-      {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         model,
         temperature: 0.1,
+        stream: true,
         messages: [
           {
             role: "system",
@@ -68,30 +73,61 @@ export const generateGroundedAnswer = async (
             content: buildPrompt(question, results),
           },
         ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 30000,
-      },
-    );
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      yield { type: "error", error: `LLM provider request failed with status ${response.status}. ${errorText}` };
+      return;
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let fullAnswer = "";
+
+    if (!reader) {
+      throw new Error("No response body reader available.");
+    }
+
+    let buffer = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // Keep the incomplete line in the buffer
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            const text = data.choices?.[0]?.delta?.content || "";
+            if (text) {
+              fullAnswer += text;
+              yield { type: "text", text };
+            }
+          } catch (e) {
+            // Ignore parse errors from incomplete chunks
+          }
+        }
+      }
+    }
+
+    yield {
+      type: "done",
+      answer: fullAnswer.trim(),
+      sources,
+      modelUsed: model,
+    };
   } catch (error) {
-    throw new Error(formatLlmError(error, baseUrl, model));
+    yield {
+      type: "error",
+      error: formatLlmError(error, baseUrl, model),
+    };
   }
-
-  const answer = response.data.choices?.[0]?.message?.content?.trim();
-
-  if (!answer) {
-    throw new Error("LLM returned an empty response.");
-  }
-
-  return {
-    answer,
-    sources,
-    modelUsed: model,
-  };
 };
 
 const buildPrompt = (question: string, results: SearchResult[]) => {
