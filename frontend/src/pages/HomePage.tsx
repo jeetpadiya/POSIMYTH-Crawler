@@ -69,7 +69,7 @@ export function HomePage() {
 
       if (!reader) throw new Error('No response body')
 
-      setChatState('success') // Set success to let the UI know it's ready to type
+      setChatState('success') 
 
       let buffer = ''
       while (!isDone) {
@@ -87,20 +87,21 @@ export function HomePage() {
               const data = JSON.parse(dataStr)
 
               if (data.type === 'text') {
-                // Add a tiny delay to prevent React from batching all updates if 
-                // multiple chunks arrive in a single network packet.
-                await new Promise((resolve) => setTimeout(resolve, 10))
-
-                setChatHistory((prev) => {
-                  const newHistory = [...prev]
-                  const updatedItem = { ...newHistory[currentHistoryId] }
-                  updatedItem.response = {
-                    ...updatedItem.response,
-                    answer: updatedItem.response.answer + data.text
-                  }
-                  newHistory[currentHistoryId] = updatedItem
-                  return newHistory
-                })
+                const chars = data.text.split('')
+                for (const char of chars) {
+                  await new Promise((resolve) => setTimeout(resolve, 10))
+                  
+                  setChatHistory((prev) => {
+                    const newHistory = [...prev]
+                    const updatedItem = { ...newHistory[currentHistoryId] }
+                    updatedItem.response = { 
+                      ...updatedItem.response, 
+                      answer: updatedItem.response.answer + char 
+                    }
+                    newHistory[currentHistoryId] = updatedItem
+                    return newHistory
+                  })
+                }
               } else if (data.type === 'done') {
                 setChatHistory((prev) => {
                   const newHistory = [...prev]
