@@ -128,10 +128,18 @@ export function HomePage() {
     }
   }
 
-  const clearHistory = () => {
+  const clearHistory = async () => {
+    try {
+      await postJson('/api/clear', {})
+    } catch (err) {
+      console.error("Failed to clear backend index", err)
+    }
+    
     setChatHistory([])
     setChatState('idle')
     setChatError('')
+    setCrawlResult(null)
+    setCrawlState('idle')
   }
 
   return (

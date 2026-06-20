@@ -1,7 +1,12 @@
 import type { Request, Response } from "express";
 import { chunkPages } from "../services/chunker.js";
 import { crawlSite } from "../services/crawler.js";
-import { getIndexStats, replaceChunks } from "../services/vectorStore.js";
+import { getIndexStats, replaceChunks, clearChunks } from "../services/vectorStore.js";
+
+export const clearIndex = (_req: Request, res: Response) => {
+  clearChunks();
+  return res.json({ message: "Index cleared successfully." });
+};
 
 export const crawlWebsite = async (req: Request, res: Response) => {
   const { url, maxPages, maxDepth, chunkSize, chunkOverlap } = req.body;

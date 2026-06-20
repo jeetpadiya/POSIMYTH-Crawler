@@ -40,6 +40,10 @@ export const replaceChunks = (chunks: TextChunk[]) => {
   indexedChunks = chunks;
 };
 
+export const clearChunks = () => {
+  indexedChunks = [];
+};
+
 export const getIndexStats = () => ({
   chunkCount: indexedChunks.length,
   sourceCount: new Set(indexedChunks.map((chunk) => chunk.url)).size,
