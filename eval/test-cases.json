@@ -1,0 +1,17 @@
+[
+  {
+    "description": "Homepage main topic",
+    "question": "What is this website about?",
+    "expectedSourceUrls": ["https://example.com"]
+  },
+  {
+    "description": "Primary call to action",
+    "question": "What can I do on this site?",
+    "expectedSourceUrls": ["https://example.com"]
+  },
+  {
+    "description": "Contact or further information",
+    "question": "How can I get more information?",
+    "expectedSourceUrls": ["https://example.com"]
+  }
+]

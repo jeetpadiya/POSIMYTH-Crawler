@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { postJson } from '../api/client'
 import { ChatPanel } from '../components/ChatPanel'
 import { CrawlPanel } from '../components/CrawlPanel'
-import type { ChatResponse, CrawlResponse, RequestState } from '../types'
+import type { ChatMessage, ChatResponse, CrawlResponse, RequestState } from '../types'
 
 export function HomePage() {
   const [url, setUrl] = useState('https://example.com')
@@ -11,7 +11,7 @@ export function HomePage() {
   const [crawlState, setCrawlState] = useState<RequestState>('idle')
   const [chatState, setChatState] = useState<RequestState>('idle')
   const [crawlResult, setCrawlResult] = useState<CrawlResponse | null>(null)
-  const [chatResult, setChatResult] = useState<ChatResponse | null>(null)
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [crawlError, setCrawlError] = useState('')
   const [chatError, setChatError] = useState('')
 
@@ -19,7 +19,7 @@ export function HomePage() {
     event.preventDefault()
     setCrawlState('loading')
     setCrawlError('')
-    setChatResult(null)
+    setChatHistory([])
 
     try {
       const data = await postJson<CrawlResponse>('/api/crawl', {
@@ -42,16 +42,18 @@ export function HomePage() {
     setChatState('loading')
     setChatError('')
 
+    const currentQuestion = question.trim()
+
     try {
       const data = await postJson<ChatResponse>('/api/chat', {
-        question: question.trim(),
+        question: currentQuestion,
         topK: 5,
       })
 
-      setChatResult(data)
+      setChatHistory((prev) => [...prev, { question: currentQuestion, response: data }])
+      setQuestion('')
       setChatState('success')
     } catch (error) {
-      setChatResult(null)
       setChatError(getErrorMessage(error))
       setChatState('error')
     }
@@ -77,7 +79,7 @@ export function HomePage() {
 
       <ChatPanel
         question={question}
-        result={chatResult}
+        history={chatHistory}
         state={chatState}
         error={chatError}
         isReady={crawlResult !== null}

@@ -23,4 +23,9 @@ export type ChatResponse = {
   sources: Source[]
 }
 
+export type ChatMessage = {
+  question: string
+  response: ChatResponse
+}
+
 export type RequestState = 'idle' | 'loading' | 'success' | 'error'

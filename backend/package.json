@@ -9,7 +9,8 @@
     "scripts": {
         "dev": "tsx watch src/server.ts",
         "start": "node dist/server.js",
-        "build": "tsc"
+        "build": "tsc",
+        "eval": "tsx ../eval/run-eval.ts"
     },
     "dependencies": {
         "@types/cors": "^2.8.19",

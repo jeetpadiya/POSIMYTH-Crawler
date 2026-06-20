@@ -1,8 +1,8 @@
 import axios from "axios";
 import type { SearchResult } from "./vectorStore.js";
 
-const DEFAULT_MODEL = "gpt-4o-mini";
-const DEFAULT_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
 const MAX_CONTEXT_CHARS_PER_CHUNK = 1200;
 
 export type Source = {

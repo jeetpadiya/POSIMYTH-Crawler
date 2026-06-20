@@ -1,10 +1,10 @@
 import type { FormEvent } from 'react'
 import { StatusBlock } from './StatusBlock'
-import type { ChatResponse, RequestState } from '../types'
+import type { ChatMessage, RequestState } from '../types'
 
 type ChatPanelProps = {
   question: string
-  result: ChatResponse | null
+  history: ChatMessage[]
   state: RequestState
   error: string
   isReady: boolean
@@ -14,7 +14,7 @@ type ChatPanelProps = {
 
 export function ChatPanel({
   question,
-  result,
+  history,
   state,
   error,
   isReady,
@@ -61,38 +61,58 @@ export function ChatPanel({
         successText="Answer ready."
       />
 
-      {result ? (
-        <div className="space-y-4 rounded-md border border-zinc-200 bg-white p-4">
-          <div>
-            <h3 className="text-sm font-semibold text-zinc-950">Answer</h3>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-800">
-              {result.answer}
-            </p>
-          </div>
+      {history.length > 0 && (
+        <div className="space-y-6">
+          {history.map((message, index) => (
+            <div
+              key={index}
+              className="space-y-4 rounded-md border border-zinc-200 bg-white p-4"
+            >
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Question
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-800">
+                  {message.question}
+                </p>
+              </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-zinc-950">Sources</h3>
-            {result.sources.length > 0 ? (
-              <ul className="mt-2 space-y-2">
-                {result.sources.map((source) => (
-                  <li key={`${source.url}-${source.chunkIndex}`}>
-                    <a
-                      className="break-words text-sm text-zinc-800 underline underline-offset-4 hover:text-zinc-950"
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {source.title || source.url}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-2 text-sm text-zinc-500">No sources returned.</p>
-            )}
-          </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Answer
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-800">
+                  {message.response.answer}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Sources
+                </p>
+                {message.response.sources.length > 0 ? (
+                  <ul className="mt-2 space-y-2">
+                    {message.response.sources.map((source) => (
+                      <li key={`${source.url}-${source.chunkIndex}`}>
+                        <a
+                          className="break-words text-sm text-zinc-800 underline underline-offset-4 hover:text-zinc-950"
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {source.title || source.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-sm text-zinc-500">No sources returned.</p>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-      ) : null}
+      )}
     </section>
   )
 }
