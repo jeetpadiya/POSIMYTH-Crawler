@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { postJson } from '../api/client'
+import { API_BASE_URL, postJson } from '../api/client'
 import { ChatPanel } from '../components/ChatPanel'
 import { CrawlPanel } from '../components/CrawlPanel'
-import type { ChatMessage, ChatResponse, CrawlResponse, RequestState } from '../types'
+import type { ChatMessage, CrawlResponse, RequestState } from '../types'
 
 export function HomePage() {
   const [url, setUrl] = useState('https://example.com')
@@ -53,7 +53,7 @@ export function HomePage() {
     setQuestion('')
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: currentQuestion, topK: 5 }),
@@ -90,13 +90,13 @@ export function HomePage() {
                 // Add a tiny delay to prevent React from batching all updates if 
                 // multiple chunks arrive in a single network packet.
                 await new Promise((resolve) => setTimeout(resolve, 10))
-                
+
                 setChatHistory((prev) => {
                   const newHistory = [...prev]
                   const updatedItem = { ...newHistory[currentHistoryId] }
-                  updatedItem.response = { 
-                    ...updatedItem.response, 
-                    answer: updatedItem.response.answer + data.text 
+                  updatedItem.response = {
+                    ...updatedItem.response,
+                    answer: updatedItem.response.answer + data.text
                   }
                   newHistory[currentHistoryId] = updatedItem
                   return newHistory
@@ -105,9 +105,9 @@ export function HomePage() {
                 setChatHistory((prev) => {
                   const newHistory = [...prev]
                   const updatedItem = { ...newHistory[currentHistoryId] }
-                  updatedItem.response = { 
-                    ...updatedItem.response, 
-                    sources: data.sources 
+                  updatedItem.response = {
+                    ...updatedItem.response,
+                    sources: data.sources
                   }
                   newHistory[currentHistoryId] = updatedItem
                   return newHistory
