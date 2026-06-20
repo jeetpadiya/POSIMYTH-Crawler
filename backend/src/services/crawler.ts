@@ -6,6 +6,7 @@ const USER_AGENT = "POSIMYTH-Crawler/1.0";
 const DEFAULT_MAX_PAGES = 20;
 const DEFAULT_MAX_DEPTH = 2;
 const DEFAULT_DELAY_MS = 750;
+const MAX_DELAY_MS = 5000;
 const MIN_TEXT_LENGTH = 100;
 
 export type CrawledPage = {
@@ -60,7 +61,14 @@ export const crawlSite = async (
   const maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
   const robots = await loadRobots(origin);
   const robotsDelay = robots.getCrawlDelay(USER_AGENT);
-  const delayMs = Math.max(DEFAULT_DELAY_MS, (robotsDelay ?? 0) * 1000);
+  const rawDelay = Math.max(DEFAULT_DELAY_MS, (robotsDelay ?? 0) * 1000);
+  const delayMs = Math.min(rawDelay, MAX_DELAY_MS);
+
+  if (rawDelay > MAX_DELAY_MS) {
+    console.warn(
+      `[crawler] robots.txt Crawl-Delay is ${robotsDelay}s — capped to ${MAX_DELAY_MS / 1000}s to keep the app responsive.`,
+    );
+  }
 
   const queue: QueueItem[] = [{ url: normalizedStartUrl, depth: 0 }];
   const seen = new Set<string>();

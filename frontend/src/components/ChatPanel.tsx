@@ -10,6 +10,7 @@ type ChatPanelProps = {
   isReady: boolean
   onQuestionChange: (question: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onClear: () => void
 }
 
 export function ChatPanel({
@@ -20,6 +21,7 @@ export function ChatPanel({
   isReady,
   onQuestionChange,
   onSubmit,
+  onClear,
 }: ChatPanelProps) {
   const canAsk = isReady && question.trim().length > 0
 
@@ -63,6 +65,18 @@ export function ChatPanel({
 
       {history.length > 0 && (
         <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              Conversation history
+            </p>
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded px-2 py-1 text-xs text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
+            >
+              Clear history
+            </button>
+          </div>
           {history.map((message, index) => (
             <div
               key={index}

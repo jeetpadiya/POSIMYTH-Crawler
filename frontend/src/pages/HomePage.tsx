@@ -59,6 +59,12 @@ export function HomePage() {
     }
   }
 
+  const clearHistory = () => {
+    setChatHistory([])
+    setChatState('idle')
+    setChatError('')
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-8 sm:px-6 sm:py-10">
       <header className="border-b border-zinc-200 pb-5">
@@ -85,6 +91,7 @@ export function HomePage() {
         isReady={crawlResult !== null}
         onQuestionChange={setQuestion}
         onSubmit={askQuestion}
+        onClear={clearHistory}
       />
     </div>
   )
