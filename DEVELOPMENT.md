@@ -49,6 +49,9 @@ Developed a clean React + TypeScript frontend to allow users to trigger crawls a
 ### Phase 9 — README
 Wrote comprehensive documentation covering setup instructions, architecture overview, and usage guidelines.
 
+### Phase 10 — Polish & Deployment
+Refined the streaming UI with an artificial character-by-character typing effect to handle React state-batching issues. Implemented a robust `POST /api/clear` endpoint to synchronize backend state with frontend history clearing. Finally, configured the frontend for deployment via `vercel.json` and environment variables.
+
 ---
 
 ## Key Principles

@@ -60,6 +60,10 @@ If your backend runs somewhere else, create `frontend/.env`:
 VITE_API_BASE_URL=http://localhost:5000
 ```
 
+## Deployment
+
+The frontend is pre-configured for Vercel deployment using the `vercel.json` rewrite rules. Ensure you set the `VITE_API_BASE_URL` environment variable in your Vercel project settings to point to your hosted backend.
+
 ## API
 
 Health check:
@@ -91,6 +95,12 @@ Content-Type: application/json
   "question": "example domain",
   "topK": 5
 }
+```
+
+Clear chat history and index:
+
+```http
+POST /api/clear
 ```
 
 ## Architecture
@@ -221,7 +231,7 @@ The UI includes only:
 ## Stretch Goals Addressed
 
 1. **Stripping boilerplate**: The crawler successfully removes `nav`, `footer`, `header`, and script elements before processing text.
-2. **Streaming responses**: The chat interface uses Server-Sent Events (SSE) to stream the LLM response word-by-word to the frontend, making it feel fast and responsive.
+2. **Streaming responses**: The chat interface uses Server-Sent Events (SSE) coupled with an artificial character-by-character typing effect in the UI to overcome state-batching issues, ensuring a fluid and responsive output.
 3. **Basic eval script**: I built an automated evaluation script (`eval/run-eval.ts`) to measure retrieval quality against a predefined set of question/expected-source pairs (`eval/test-cases.json`).
 4. **Handling JavaScript-rendered pages (Skipped)**: I intentionally chose *not* to implement this. Adding Puppeteer or Playwright adds a massive Chromium dependency, severely slows down the crawl, and makes the project harder to run locally. I favored a "small site that answers accurately" over gold-plating with a heavy headless browser.
 
